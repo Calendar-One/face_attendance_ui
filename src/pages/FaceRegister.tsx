@@ -134,7 +134,7 @@ const FaceRegister: React.FC = () => {
 
     try {
       // Register each image one by one
-      const results = await Promise.all(capturedImages.map(async (image) => {
+      await Promise.all(capturedImages.map(async (image) => {
         const formData = new FormData();
         formData.append('id', userId);
         formData.append('imageFile', image.blob, `face_${image.id}.jpg`);
