@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Camera, CheckCircle, AlertCircle } from "lucide-react";
 
-const baseURL = `${import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000'}`
+import { ToastContainer, toast } from 'react-toastify';
+
+const baseURL = `${
+  import.meta.env.VITE_BACKEND_API_URL || "http://localhost:8000"
+}`;
 
 interface AttendanceRecord {
   userId: string;
@@ -13,6 +17,7 @@ interface VerifyResponse {
   verified: boolean;
   user_id: string;
   confidence_score: number;
+  message?: string;
 }
 
 export default function FaceAttendanceSystem() {
@@ -37,19 +42,18 @@ export default function FaceAttendanceSystem() {
     };
   }, []);
 
-
   const startCamera = async (): Promise<void> => {
     try {
       setError(null);
       streamRef.current = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
       });
-      
+
       // Ensure videoRef is available before setting srcObject
       if (!videoRef.current) {
         throw new Error("Video element not available");
       }
-      
+
       videoRef.current.srcObject = streamRef.current;
     } catch (err: unknown) {
       const error = err as Error;
@@ -115,12 +119,18 @@ export default function FaceAttendanceSystem() {
         };
         // Show success message
         const successMessage = `Successfully recorded attendance for ${data.user_id}`;
-        alert(successMessage);
+        toast.success(successMessage);
         // You could also implement a more elegant notification system here
         // For example, setting a state variable to show a toast notification
 
         setAttendanceLog((prev) => [newAttendance, ...prev]);
         return true;
+      }
+      else {
+        // Show failure message;
+        toast.error(data?.message);
+        // You could also implement a more elegant notification system here
+        // For example, setting a state variable to show a toast notification
       }
 
       return false;
@@ -137,16 +147,16 @@ export default function FaceAttendanceSystem() {
     try {
       // First ensure we're not already capturing
       if (isCapturing) return;
-      
+
       // Set capturing state first to render the video element
       setIsCapturing(true);
-      
+
       // Small delay to ensure the video element is rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Now start the camera
       await startCamera();
-      
+
       // Wait for video to be ready
       if (videoRef.current) {
         if (videoRef.current.readyState >= 2) {
@@ -195,7 +205,13 @@ export default function FaceAttendanceSystem() {
       <h1 className="text-2xl font-bold mb-6">Face Attendance System</h1>
 
       <div className="flex flex-col items-center w-full">
-        <div className={`relative w-full max-w-xl h-96 bg-gray-100 rounded-lg overflow-hidden mb-4 ${processing ? 'animate-pulse border-4 border-blue-500 border-opacity-75' : ''}`}>
+        <div
+          className={`relative w-full max-w-xl h-96 bg-gray-100 rounded-lg overflow-hidden mb-4 ${
+            processing
+              ? "animate-pulse border-4 border-blue-500 border-opacity-75"
+              : ""
+          }`}
+        >
           {isCapturing ? (
             <video
               ref={videoRef}
