@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Camera, CheckCircle, AlertCircle } from "lucide-react";
 
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 
 const baseURL = `${
   import.meta.env.VITE_BACKEND_API_URL || "http://localhost:8000"
