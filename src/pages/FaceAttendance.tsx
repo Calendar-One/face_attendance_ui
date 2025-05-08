@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Camera, CheckCircle, AlertCircle } from "lucide-react";
+import { Camera, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 const baseURL = `${
   import.meta.env.VITE_BACKEND_API_URL || "http://localhost:8000"
@@ -25,6 +25,7 @@ export default function FaceAttendanceSystem() {
   const [attendanceLog, setAttendanceLog] = useState<AttendanceRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -46,7 +47,7 @@ export default function FaceAttendanceSystem() {
     try {
       setError(null);
       streamRef.current = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
+        video: { facingMode: facingMode },
       });
 
       // Ensure videoRef is available before setting srcObject
@@ -70,6 +71,20 @@ export default function FaceAttendanceSystem() {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+  };
+
+  const toggleCamera = async (): Promise<void> => {
+    // Stop current camera stream
+    stopCamera();
+
+    // Toggle facing mode
+    setFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
+
+    // Small delay to ensure the camera has time to stop
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // Restart camera with new facing mode
+    await startCamera();
   };
 
   const captureFrame = (): Promise<Blob | null> | null => {
@@ -125,8 +140,7 @@ export default function FaceAttendanceSystem() {
 
         setAttendanceLog((prev) => [newAttendance, ...prev]);
         return true;
-      }
-      else {
+      } else {
         // Show failure message;
         toast.error(data?.message);
         // You could also implement a more elegant notification system here
@@ -213,13 +227,24 @@ export default function FaceAttendanceSystem() {
           }`}
         >
           {isCapturing ? (
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              playsInline
-              muted
-            />
+            <>
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                autoPlay
+                playsInline
+                muted
+              />
+              <button
+                onClick={toggleCamera}
+                className="absolute top-4 right-4 bg-white bg-opacity-70 p-2 rounded-full hover:bg-opacity-100 transition-all cursor-pointer"
+                title={`Switch to ${
+                  facingMode === "user" ? "back" : "front"
+                } camera`}
+              >
+                <RefreshCw size={24} className="text-blue-600" />
+              </button>
+            </>
           ) : (
             <div className="flex items-center justify-center h-full">
               <Camera size={96} className="text-gray-400" />
